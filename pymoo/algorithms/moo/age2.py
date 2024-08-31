@@ -7,8 +7,6 @@ except:
     raise Exception("Please install numba to use AGEMOEA2: pip install numba")
 
 import numpy as np
-
-
 from pymoo.algorithms.base.genetic import GeneticAlgorithm
 from pymoo.algorithms.moo.age import AGEMOEASurvival
 from pymoo.algorithms.moo.nsga2 import binary_tournament
@@ -66,16 +64,16 @@ class AGEMOEA2(GeneticAlgorithm):
 
 @jit(nopython=True, fastmath=True)
 def project_on_manifold(point, p):
-    dist = sum(point[point > 0] ** p) ** (1/p)
+    dist = sum(point[point > 0] ** p) ** (1 / p)
+    if dist == 0:
+        return np.zeros_like(point)
+
     return np.multiply(point, 1 / dist)
-
-
-import numpy as np
 
 
 def find_zero(point, n, precision):
     x = 1
-    epsilon = 1e-10  # Small constant for regularization
+    epsilon = np.finfo(np.float64).eps  # Small constant for regularization
     past_value = x
     max_float = np.finfo(np.float64).max  # Maximum representable float value
     log_max_float = np.log(max_float)  # Logarithm of the maximum float
@@ -181,14 +179,15 @@ class AGEMOEA2Survival(AGEMOEASurvival):
                     distances[row][column] = sum(np.abs(projected_front[row] - projected_front[column]) ** 2) ** 0.5
 
         else:
-            for row in range(0, m-1):
-                for column in range(row+1, m):
+            for row in range(0, m - 1):
+                for column in range(row + 1, m):
                     mid_point = projected_front[row] * 0.5 + projected_front[column] * 0.5
                     mid_point = project_on_manifold(mid_point, p)
 
                     distances[row][column] = sum(np.abs(projected_front[row] - mid_point) ** 2) ** 0.5 + \
-                                            sum(np.abs(projected_front[column] - mid_point) ** 2) ** 0.5
+                                             sum(np.abs(projected_front[column] - mid_point) ** 2) ** 0.5
 
         return distances + distances.T
+
 
 parse_doc_string(AGEMOEA2.__init__)

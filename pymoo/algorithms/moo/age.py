@@ -146,6 +146,7 @@ class AGEMOEASurvival(Survival):
         front = np.round(front, 12, out=front)
         m, n = front.shape
         crowd_dist = np.zeros(m)
+        epsilon = np.finfo(np.float64).eps
 
         if m < n:
             p = 1
@@ -168,10 +169,10 @@ class AGEMOEASurvival(Survival):
 
         nn = np.linalg.norm(front, p, axis=1)
         # Replace very small norms with 1 to prevent division by zero
-        nn[nn < 1e-8] = 1
+        nn[nn <= epsilon] = 1
 
         distances = self.pairwise_distances(front, p)
-        distances[distances < 1e-8] = 1e-8  # Replace very small entries to prevent division by zero
+        distances[distances <= epsilon] = epsilon  # Replace very small entries to prevent division by zero
 
         distances = distances / (nn[:, None])
 
@@ -215,7 +216,7 @@ class AGEMOEASurvival(Survival):
         return p
 
     @staticmethod
-    #@jit(nopython=True, fastmath=True)
+    @jit(nopython=True, fastmath=True)
     def pairwise_distances(front, p):
         m = np.shape(front)[0]
         distances = np.zeros((m, m))
