@@ -83,7 +83,9 @@ class ZeroToOneNormalization(Normalization):
         N = np.copy(X)
 
         # normalize between zero and one if neither of them is nan
-        N[..., neither_nan] = (X[..., neither_nan] - xl[neither_nan]) / (xu[neither_nan] - xl[neither_nan])
+        denominator = xu[neither_nan] - xl[neither_nan]
+        denominator[denominator == 0] = np.finfo(denominator.dtype).eps
+        N[..., neither_nan] = (X[..., neither_nan] - xl[neither_nan]) / denominator
 
         N[..., xl_only] = X[..., xl_only] - xl[xl_only]
 
@@ -136,13 +138,13 @@ class SimpleZeroToOneNormalization(Normalization):
         #     raise Exception("Normalization failed because lower and upper bounds are equal!")
 
         # calculate the denominator
-        denom = xu - xl
+        denominator = xu - xl
 
         # we can not divide by zero -> plus small epsilon
-        denom += (denom == 0) * 1e-32
+        denominator[denominator == 0] = np.finfo(denominator.dtype).eps
 
         # normalize the actual values
-        N = (X - xl) / denom
+        N = (X - xl) / denominator
 
         return N
 
